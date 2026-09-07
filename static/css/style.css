@@ -4,6 +4,7 @@
     box-sizing: border-box;
 }
 
+/*Palet warna & tema tata letak*/
 :root {
     --ink: #1c1917;
     --paper: #faf6f0;
@@ -14,6 +15,7 @@
     --radius: 4px;
 }
 
+/*Base Typography & container*/
 body {
     font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: var(--ink);
@@ -31,6 +33,7 @@ h1, .brand {
     padding: 0 1.5rem;
 }
 
+/*Header & Navigation*/
 .site-header {
     border-bottom: 1px solid var(--line);
 }
@@ -60,6 +63,7 @@ h1, .brand {
     font-size: 0.95rem;
 }
 
+/*Hero section*/
 .hero {
     padding: 4.5rem 0 5rem;
 }
@@ -176,6 +180,7 @@ h1, .brand {
     border-top: 1px solid var(--line);
 }
 
+/*Skills ssection untuk tugas */
 .skills {
     padding: 4rem 0 5rem;
     border-top: 1px solid var(--line);
