@@ -161,7 +161,4 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 WHITENOISE_USE_FINDERS = True
-<<<<<<< HEAD
 
-=======
->>>>>>> 9f98c0de9a76dc1aa7d5f027c0d6f3d78eca2e60
