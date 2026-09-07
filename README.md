@@ -16,3 +16,7 @@ Jawaban Pertanyaan Reflektif Tugas 1
 3a. Website yang Anda buat saat ini adalah static web murni. Batasan apa yang Anda rasakan saat mencoba menyajikan informasi pada portofolio Anda secara optimal? Saya merasakan dua hal. Pertama, setiap pembaruan karya atau riwayat harus dilakukan dengan mengedit kode HTML secara manual. Selain itu, formulir kontak tidak dapat memproses atau menyimpan pesan dari pengunjung tanpa bantuan layanan eksternal.
 
 3b. Berdasarkan batasan tersebut, fungsionalitas dinamis apa yang paling ingin Anda persiapkan dan tambahkan pada iterasi proyek selanjutnya?Saya ingin mengembangkan logika backend untuk menangkap masukan pesan, menyimpannya ke database, dan mengirimkan notifikasi email otomatis.
+
+
+AI Disclosure
+Pada bagian section Skills, AI digunakan untuk membantu memberikan struktur dan komentar awal pada kode. Setelah itu, dilakukan perbaikan secara manual pada kode, seperti merapikan indentation, memastikan setiap skill-card memiliki elemen <h3> dan <p> yang sesuai, serta memeriksa kembali struktur pembuka dan penutup setiap elemen <div> agar tidak terjadi kesalahan nesting.
