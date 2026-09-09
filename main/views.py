@@ -5,11 +5,11 @@ from main.models import Experience
 
 def show_main(request):
     context = {
-        "name": "Burhan",
-        "npm": "2206000000",
-        "study_program": "S1 Ilmu Komputer",
+        "name": "Jehezkiel",
+        "npm": "2506611156",
+        "study_program": "S1 Sistem Informasi ",
         "bio": (
-            "Mahasiswa Ilmu Komputer Universitas Indonesia yang tertarik "
+            "Mahasiswa Sistem Informasi  Universitas Indonesia yang tertarik "
             "pada pengembangan perangkat lunak dan pendidikan."
         ),
     }
@@ -18,7 +18,7 @@ def show_main(request):
 
 def show_experience(request):
     context = {
-        "name": "Burhan",
+        "name": "Jehezkiel",
         "experience_list": Experience.objects.all(),
     }
     return render(request, "experience.html", context)
