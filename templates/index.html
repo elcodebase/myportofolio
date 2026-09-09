@@ -15,10 +15,10 @@
     <header class="site-header">
         <div class="container">
             <!-- Nama/brand website yang mengarah ke bagian profile -->
-            <a href="#profile" class="brand">Jehezkiel</a>
+            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
             <nav>
-                <a href="#profile">Profile</a>
-                <a href="#skills">Skills</a>
+                <a href="{% url 'main:show_main' %}">Profile</a>
+                <a href="{% url 'main:show_experience' %}">Experience</a>
             </nav>
         </div>
     </header>
