@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jehezkiel - Portfolio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Bagian body berisi seluruh konten yang ditampilkan pada halaman -->
+    <!-- Header berisi nama/brand dan navigasi ke bagian Profile dan Skills -->
+    <header class="site-header">
+        <div class="container">
+            <!-- Nama/brand website yang mengarah ke bagian profile -->
+            <a href="{% url 'main:show_main' %}" class="brand">{{ name }}</a>
+            <nav>
+                <a href="{% url 'main:show_main' %}">Profile</a>
+                <a href="{% url 'main:show_experience' %}">Experience</a>
+                <a href="{% url 'main:show_projects' %}">Projects</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Bagian utama halaman -->
+    <main>
+        <!-- Hero section sekaligus bagian Profile -->
+        <section class="hero" id="profile">
+            <div class="container hero-grid">
+                <div class="hero-identity">
+                    <p class="hero-kicker">Information System &middot; Universitas Indonesia</p>
+                    <h1>Jehezkiel</h1>
+                </div>
+                <div class="hero-photo">
+                    <div class="photo-block"></div>
+                    <img class="avatar" src="/static/img/fotoprofil.jpg" alt="Photo of Jehezkiel">
+                </div>
+                <div class="hero-details">
+                    <p class="bio">Information System student at Universitas Indonesia serving as programming foundation teaching assistant</p>
+                    <dl class="meta-list">
+                        <div class="meta-row">
+                            <dt>NPM</dt>
+                            <dd>2506611156</dd>
+                        </div>
+                        <div class="meta-row">
+                            <dt>Program</dt>
+                            <dd>S1 Sistem Informasi</dd>
+                        </div>
+                    </dl>
+                    <div class="social-links">
+                        <a href="https://github.com/elcodebase" class="social-link">GitHub</a>
+                        <a href="https://www.linkedin.com/in/jehezkiellatupeirissa/" class="social-link">LinkedIn</a>
+                        <a href="mailto:jehezkiel.jefferson@ui.ac.id" class="social-link">Email</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+                <section class="skills" id="skills">
+            <div class="container">
+                <h2 class="section-title">Skills</h2>
+                <div class="skills-grid">
+                    <div class="skill-card">
+                        <h3>Python</h3>
+                        <p>Digunakan untuk backend Django dan scripting sehari-hari.</p>
+                    </div>
+                    <div class="skill-card">
+                        <h3>HTML5 &amp; CSS3</h3>
+                        <p>Membangun struktur halaman semantik dan tampilan responsif.</p>
+                    </div>
+                    <div class="skill-card">
+                        <h3>Git &amp; GitHub</h3>
+                        <p>Version control dan kolaborasi kode untuk proyek kuliah maupun pribadi.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer website -->
+
+    <footer class="site-footer">
+        <div class="container">
+            <!-- Copyright dan informasi fakultas/universitas -->
+            <p>&copy; 2026 Jehezkiel. Fakultas Ilmu Komputer, Universitas Indonesia.</p>
+        </div>
+    </footer>
+</body>
+</html>
