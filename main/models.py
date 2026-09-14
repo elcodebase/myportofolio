@@ -24,3 +24,11 @@ class Experience(models.Model):
     @property
     def is_ongoing(self):
         return self.ended_at is None
+
+class Project(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    category = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.title
