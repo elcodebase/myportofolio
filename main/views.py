@@ -31,23 +31,21 @@ def show_experience(request):
     return render(request, "experience.html", context)
 
 def show_projects(request):
-    projects = Project.objects.all()
-    
-    context = {
-        'projects': projects,
-    }
-    
-    return render(request, 'projects.html', context)
+    json_response = get_projects_json(request)
+    projects = serializers.deserialize(
+        "json",
+        json_response.content.decode("utf-8"),
+    )
+    projects = [project.object for project in projects]
+    title_query = request.GET.get("title", "").strip()
 
-def show_project(request):
-    projects = Project.objects.all()
-    
     context = {
-        'name': "Jehezkiel",
-        'project_list': Project.objects.all(),
+        "name": "Jehezkiel",
+        "project_list": projects,
+        "title_query": title_query,
     }
-    
-    return render(request, 'project.html', context)
+    return render(request, "project.html", context)
+
 
 def create_project(request):
     form = ProjectForm(request.POST or None)
@@ -58,7 +56,7 @@ def create_project(request):
         return redirect("main:show_projects")
 
     context = {
-        "name": "Burhan",
+        "name": "Jehezkiel",
         "form": form,
     }
     return render(request, "projects_form.html", context)
