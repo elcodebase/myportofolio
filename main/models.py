@@ -35,3 +35,15 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
+
+class Certification(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=255)
+    issuer = models.CharField(max_length=255)
+    credential_url = models.URLField(blank=True)
+    issued_at = models.DateField()
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.issuer}"

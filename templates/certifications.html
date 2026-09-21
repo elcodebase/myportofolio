@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block meta %}
+    <title>Certifications - {{ name }}</title>
+{% endblock meta %}
+{% block content %}
+<main>
+    <section class="experience-section" id="certifications">
+        <div class="container">
+            <p class="section-kicker">Sertifikasi yang saya miliki</p>
+            <div class="project-header">
+                <h1>Certifications</h1>
+                <a href="{% url 'main:create_certification' %}" class="button project-add-button">
+                    <span aria-hidden="true">+</span> Tambah Sertifikasi
+                </a>
+            </div>
+
+            <div class="experience-grid project-grid">
+                {% for certification in certification_list %}
+                    <article class="experience-card">
+                        <span class="experience-category">{{ certification.issuer }}</span>
+                        <h2>{{ certification.title }}</h2>
+                        <p class="experience-description">
+                            Terbit: {{ certification.issued_at }}
+                            {% if certification.is_verified %}&middot; Terverifikasi{% endif %}
+                        </p>
+                        {% if certification.credential_url %}
+                            <p class="experience-status">
+                                <a href="{{ certification.credential_url }}">Lihat kredensial</a>
+                            </p>
+                        {% endif %}
+                        <div class="project-card-actions">
+                            <div class="project-actions">
+                                <a href="{% url 'main:update_certification' certification.id %}" class="button button-secondary">Edit</a>
+                                {% include "components/certification_delete_modal.html" %}
+                            </div>
+                        </div>
+                    </article>
+                {% empty %}
+                    <p class="empty-state">Belum ada sertifikasi yang ditambahkan.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock content %}

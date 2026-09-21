@@ -1,6 +1,10 @@
 from django.urls import path
-from main.views import create_project, get_projects_json, delete_project
-from main.views import show_main, show_experience, show_projects
+from main.views import (
+    show_main, show_experience,
+    show_projects, create_project, get_projects_json, delete_project,
+    show_certifications, create_certification, update_certification,
+    delete_certification, get_certifications_json,
+)
 
 app_name = "main"
 
@@ -11,5 +15,12 @@ urlpatterns = [
     path("projects/add/", create_project, name="create_project"),
     path("api/projects/", get_projects_json, name="get_projects_json"),
     path("projects/<uuid:project_id>/delete/",delete_project,name="delete_project"),
+
+    #untuk sertifikasi
+    path("certifications/", show_certifications, name = "show_certifications"),
+    path("certifications/add/", create_certification, name="create_certification"),
+    path("certifications/<uuid:certification_id>/edit/", update_certification, name="update_certification"),
+    path("certifications/<uuid:certification_id>/delete/", delete_certification, name="delete_certification"),
+    path("api/certifications/", get_certifications_json, name="get_certifications_json"),
     
 ]

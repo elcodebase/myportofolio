@@ -1,8 +1,8 @@
 from django.shortcuts import render
 
-from main.models import Experience
+from main.models import Experience, Certification
 from main.models import Project
-from main.forms import ProjectForm
+from main.forms import ProjectForm, CertificationForm
 
 from django.contrib import messages
 from django.core import serializers
@@ -80,3 +80,70 @@ def delete_project(request, project_id):
         return redirect("main:show_projects")
 
     return redirect("main:show_projects")
+
+
+
+def show_certifications(request):
+    json_response = get_certifications_json(request)
+    certifications = serializers.deserialize(
+        "json",
+        json_response.content.decode("utf-8"),
+    )
+    certifications = [certification.object for certification in certifications]
+
+    context = {
+        "name": "Jehezkiel",
+        "certification_list": certifications,
+    }
+    return render(request, "certifications.html", context)
+
+
+def create_certification(request):
+    form = CertificationForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Sertifikasi baru berhasil ditambahkan!")
+        return redirect("main:show_certifications")
+
+    context = {
+        "name": "Jehezkiel",
+        "form": form,
+        "is_edit": False,
+    }
+    return render(request, "certifications_form.html", context)
+
+
+def update_certification(request, certification_id):
+    certification = get_object_or_404(Certification, pk=certification_id)
+    form = CertificationForm(request.POST or None, instance=certification)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Sertifikasi berhasil diperbarui!")
+        return redirect("main:show_certifications")
+
+    context = {
+        "name": "Jehezkiel",
+        "form": form,
+        "is_edit": True,
+        "certification": certification,
+    }
+    return render(request, "certifications_form.html", context)
+
+
+def get_certifications_json(request):
+    certifications = Certification.objects.all()
+    certifications_json = serializers.serialize("json", certifications)
+    return HttpResponse(certifications_json, content_type="application/json")
+
+
+def delete_certification(request, certification_id):
+    certification = get_object_or_404(Certification, pk=certification_id)
+
+    if request.method == "POST":
+        certification.delete()
+        messages.success(request, "Sertifikasi berhasil dihapus!")
+        return redirect("main:show_certifications")
+
+    return redirect("main:show_certifications")
