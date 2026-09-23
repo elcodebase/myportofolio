@@ -9,9 +9,11 @@
             <p class="section-kicker">Karya yang saya bangun</p>
             <div class="project-header">
                 <h1>Projects</h1>
-                <a href="{% url 'main:create_project' %}" class="button project-add-button">
-                    <span aria-hidden="true">+</span> Tambahkan Proyekmu
-                </a>
+                {% if user.is_superuser %}
+                    <a href="{% url 'main:create_project' %}" class="button project-add-button">
+                        <span aria-hidden="true">+</span> Tambahkan Proyekmu
+                    </a>
+                {% endif %} 
             </div>
 
             <form method="get" action="{% url 'main:show_projects' %}" class="project-search">
@@ -34,7 +36,10 @@
                                 {% if project.project_url %}
                                     <a href="{{ project.project_url }}" class="button">Lihat proyek</a>
                                 {% endif %}
-                                {% include "components/project_delete_modal.html" %}
+                                {% include "components/project_star.html" with project=project %}
+                                {% if user.is_superuser %}
+                                    {% include "components/project_delete_modal.html" %}
+                                {% endif %}  
                             </div>
                         </div>
                     </article>

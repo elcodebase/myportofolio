@@ -1,6 +1,6 @@
 from django.urls import path
 from main.views import (
-    show_main, show_experience,
+    show_main, show_experience, toggle_star,
     show_projects, create_project, get_projects_json, delete_project,
     show_certifications, create_certification, update_certification,
     delete_certification, get_certifications_json, show_achievements, show_testimonies, show_organization, register, login_user, logout_user
@@ -27,5 +27,7 @@ urlpatterns = [
     path("organization/", show_organization, name = 'show_organization'),
     path("register/", register, name="register"),
     path("login/", login_user, name="login"),
-    path("logout/", logout_user, name="logout"),   
+    path("logout/", logout_user, name="logout"), 
+    # Tambahkan path ini ke dalam urlpatterns
+ 
 ]
