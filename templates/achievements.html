@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class = "achievement-page">
+    <h1>Achievement</h1>
+
+    {% if achievement_list %}
+        <div class = "achievement-grid">
+            {% for achievement in achievement_list %}
+                <div class = "achievement-card">
+                    {% if achievement.is_top_tier %}
+                        <span class = "top-tier-badge">Top Tier</span>
+                    {% endif %}
+                    <h3>{{ achievement.title}}</h3>
+                    <p class = "achievement-meta">
+                        {{ achievement.get_level_display }} &bull; {{ achievement.achieved_at|date:"d M Y" }}
+                    </p>
+                    <p class = "achievement-description"> {{ achievement.description }} </p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p> No Achievement have been added yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

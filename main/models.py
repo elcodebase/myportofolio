@@ -47,3 +47,65 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.issuer}"
+
+class Achievement(models.Model):
+    id = models.UUIDField(primary_key = True, default = uuid.uuid4, editable = False)
+    title = models.CharField(max_length = 200)
+    description = models.TextField()
+
+    class Level(models.TextChoices):
+        CAMPUS = 'campus', 'Campus'
+        NATIONAL = 'national', 'National'
+        INTERNATIONAL = 'international', 'International'
+
+    level = models.CharField(
+        max_length = 20,
+        choices = Level.choices,
+        default = Level.CAMPUS,
+    )
+
+    @property
+    def is_top_tier(self):
+        return self.level in [self.Level.National, self.Level.International]
+
+    def __str__(self):
+        return self.title
+
+class Testimoni(models.Model):
+    name = models.CharField(max_length = 200)
+    description = models.TextField()
+
+    class Category(models.TextChoices):
+        DOSEN = 'dosen', 'Dosen'
+        TEMAN = 'teman', 'Teman'
+        KELUARGA = 'keluarga', 'Keluarga'
+
+    category = models.CharField(
+        max_length = 20,
+        choices = Category.choices,
+        default = Category.TEMAN,
+    )
+
+    @property
+    def __str__(self):
+        return self.name
+
+class Organization(models.Model):
+    name = models.CharField(max_length = 200)
+
+    class Level(models.TextChoices):
+        FAKULTAS = 'fakultas', 'Fakultas'
+        EKSTERNAL = 'eksternal', 'Eksternal'
+        KAMPUS = 'kampus', 'Kampus'
+
+    level = models.CharField(
+        max_length = 20,
+        choices = Level.choices,
+        default = Level.FAKULTAS,
+
+    )
+
+    def __str__(self):
+        return self.name
+
+        

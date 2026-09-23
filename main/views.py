@@ -1,9 +1,10 @@
 from django.shortcuts import render
 
 from main.models import Experience, Certification
-from main.models import Project
+from main.models import Project, Achievement, Testimoni, Organization
 from main.forms import ProjectForm, CertificationForm
-
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib import messages
 from django.core import serializers
 from django.http import HttpResponse
@@ -147,3 +148,51 @@ def delete_certification(request, certification_id):
         return redirect("main:show_certifications")
 
     return redirect("main:show_certifications")
+
+def show_achievements(request):
+    achievement_list = Achievement.objects.all()
+    context = {
+        'achievement': achievement_list
+    }
+    return render(request, 'achievements.html', context)
+
+def show_testimonies(request):
+    testimonies_list = Testimoni.objects.all()
+    context = {
+        'testimonies': testimonies_list
+    }
+    return render(request, 'testimonies.html', context)
+
+def show_organization(request):
+    organization_list = Organization.objects.all()
+    context = {
+        'organization': organization_list
+    }
+    return render(request, 'organization.html', context)
+
+def register(request):
+    form = UserCreationForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Akun berhasil dibuat. Silakan login.")
+        return redirect("main:login")
+
+    context = {
+        "name": "Burhan",
+        "form": form,
+    }
+    return render(request, "register.html", context)
+
+def login_user(request):
+    form = AuthenticationForm(request, data=request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        login(request, form.get_user())
+        return redirect("main:show_main")
+
+    context = {
+        "name": "Burhan",
+        "form": form,
+    }
+    return render(request, "login.html", context)

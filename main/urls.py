@@ -3,7 +3,7 @@ from main.views import (
     show_main, show_experience,
     show_projects, create_project, get_projects_json, delete_project,
     show_certifications, create_certification, update_certification,
-    delete_certification, get_certifications_json,
+    delete_certification, get_certifications_json, show_achievements, show_testimonies, show_organization
 )
 
 app_name = "main"
@@ -22,5 +22,7 @@ urlpatterns = [
     path("certifications/<uuid:certification_id>/edit/", update_certification, name="update_certification"),
     path("certifications/<uuid:certification_id>/delete/", delete_certification, name="delete_certification"),
     path("api/certifications/", get_certifications_json, name="get_certifications_json"),
-    
+    path("achievement/", show_achievements, name = 'show_achievements'),
+    path("testimonies/", show_testimonies, name = 'show_testimonies'),
+    path("organization/", show_organization, name = 'show_organization'),    
 ]

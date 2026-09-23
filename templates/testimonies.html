@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class = "testimonies-page">
+    <h1>Testimonies</h1>
+
+    {% if testimonies_list %}
+        <div class = "testimonies-grid">
+            {% for testi in testimonies_list %}
+                <div class = "testimonies-card">
+                    <h3>{{ testi.name }} </h3>
+                    <p class = "testimonies-description">
+                        {{ testi.description }} &bull; {{testi.achieved_at|date:"d M Y"}}
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p> No Testimonies have been added yet. </p>
+    {% endif %}
+</div>
+{% endblock %}

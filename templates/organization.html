@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block meta %}
+    <title> Organisasi - {{ name }} </title>
+{% endblock meta %}
+{% block content %}
+<main>
+    <section class = "organization-section" id = "organization">
+        <div class = "container">
+            <p class = "section-kicker"> Sertifikasi yang saya mliki </p>
+            <div class = "project-header">
+                <h1>Certifications</h1>
+                <a href = "{% url 'main:create_certification' %}" class = "button project-add-button">
+                    <span aria-hidden = "true"> + </span> Tambah Sertifikasi
+                </a>
+            </div>
+
+            <div class = "organization-grid project-grid">
+                {% for organization in organization_list %}
+                    <article class = "experience-card">
+                        <span class = "experience-category">
+        </div>
+        
+    </section>
+</main>
+{% endblock %}
