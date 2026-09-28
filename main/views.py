@@ -1,18 +1,31 @@
 from django.shortcuts import render
-
 from main.models import Experience, Certification
 from main.models import Project, Achievement, Testimoni, Organization
 from main.forms import ProjectForm, CertificationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib import messages
 from django.core import serializers
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 import datetime
+
+def is_editor(user):
+    return user.is_authenticated and user.groups.filter(name='Editor').exists()
+
+def can_edit(user):
+    return user.is_authenticated and (user.is_superuser or is_editor(user))
+
+def require_owner(user):
+    if not user.is_superuser:
+        raise PermissionDenied
+
+def require_editor_or_owner(user):
+    if not can_edit(user):
+        raise PermissionDenied
 
 def show_main(request):
     last_login = request.COOKIES.get('last_login', 'Belum ada sesi login / Cookie tidak ditemukan')
@@ -27,7 +40,6 @@ def show_main(request):
         "last_login": last_login,
     }
     return render(request, "index.html", context)
-
 
 def show_experience(request):
     context = {
@@ -49,13 +61,13 @@ def show_projects(request):
         "name": "Jehezkiel",
         "project_list": projects,
         "title_query": title_query,
+        "is_editor": is_editor(request.user),
     }
     return render(request, "project.html", context)
 
 @login_required(login_url="/login/")
 def create_project(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_owner(request.user)
     form = ProjectForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -69,6 +81,25 @@ def create_project(request):
     }
     return render(request, "projects_form.html", context)
 
+@login_required(login_url="/login/")
+def update_project(request, project_id):
+    require_editor_or_owner(request.user)
+    project = get_object_or_404(Project, pk=project_id)
+    form = ProjectForm(request.POST or None, instance=project)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Proyek berhasil diperbarui!")
+        return redirect("main:show_projects")
+
+    context = {
+        "name": "Jehezkiel",
+        "form": form,
+        "is_edit": True,
+        "project": project,
+    }
+    return render(request, "projects_form.html", context)
+
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
     projects = Project.objects.all()
@@ -76,7 +107,10 @@ def get_projects_json(request):
     if title_query:
         projects = projects.filter(title__icontains=title_query)
 
-    projects_json = serializers.serialize("json", projects, use_natural_foreign_keys=True)
+    projects_json = serializers.serialize(
+        "json", projects,
+        fields=("title", "description", "tech_stack", "project_url", "project_image_url"),
+    )
     return HttpResponse(projects_json, content_type="application/json")
 
 @login_required(login_url="/login/")
@@ -100,16 +134,19 @@ def show_certifications(request):
         "json",
         json_response.content.decode("utf-8"),
     )
-    certifications = [certification.object for certification in certifications]
+    ids = [certification.object.pk for certification in certifications]
+    certifications = Certification.objects.filter(pk__in=ids).prefetch_related("starred_by").order_by("-issued_at")
 
     context = {
         "name": "Jehezkiel",
         "certification_list": certifications,
+        "is_editor": is_editor(request.user),
     }
     return render(request, "certifications.html", context)
 
-
+@login_required(login_url="/login/")
 def create_certification(request):
+    require_owner(request.user)
     form = CertificationForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
@@ -124,8 +161,9 @@ def create_certification(request):
     }
     return render(request, "certifications_form.html", context)
 
-
+@login_required(login_url="/login/")
 def update_certification(request, certification_id):
+    require_editor_or_owner(request.user)
     certification = get_object_or_404(Certification, pk=certification_id)
     form = CertificationForm(request.POST or None, instance=certification)
 
@@ -145,11 +183,15 @@ def update_certification(request, certification_id):
 
 def get_certifications_json(request):
     certifications = Certification.objects.all()
-    certifications_json = serializers.serialize("json", certifications)
+    certifications_json = serializers.serialize(
+        "json", certifications,
+        fields=("title", "issuer", "credential_url", "issued_at", "is_verified", "created_at"),
+    )
     return HttpResponse(certifications_json, content_type="application/json")
 
-
+@login_required(login_url="/login/")
 def delete_certification(request, certification_id):
+    require_owner(request.user)
     certification = get_object_or_404(Certification, pk=certification_id)
 
     if request.method == "POST":
@@ -189,7 +231,7 @@ def register(request):
         return redirect("main:login")
 
     context = {
-        "name": "Burhan",
+        "name": "Jehezkiel",
         "form": form,
     }
     return render(request, "register.html", context)
@@ -205,7 +247,7 @@ def login_user(request):
         return response
 
     context = {
-        "name": "Burhan",
+        "name": "Jehezkiel",
         "form": form,
     }
     return render(request, "login.html", context)
@@ -216,17 +258,26 @@ def logout_user(request):
     response.delete_cookie('last_login')
     return response
 
-# Tanpa cek is_superuser: semua akun yang sudah login boleh memberi star
 @login_required(login_url="/login/")
+@require_POST
 def toggle_star(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
 
-    if request.method == "POST":
-        # Kalau akun ini sudah pernah memberi star, batalkan star-nya.
-        # Kalau belum, tambahkan star.
-        if request.user in project.starred_by.all():
-            project.starred_by.remove(request.user)
-        else:
-            project.starred_by.add(request.user)
+    if project.starred_by.filter(pk=request.user.pk).exists():
+        project.starred_by.remove(request.user)
+    else:
+        project.starred_by.add(request.user)
 
     return redirect("main:show_projects")
+
+@login_required(login_url="/login/")
+@require_POST
+def toggle_certification_star(request, certification_id):
+    certification = get_object_or_404(Certification, pk=certification_id)
+
+    if certification.starred_by.filter(pk=request.user.pk).exists():
+        certification.starred_by.remove(request.user)
+    else:
+        certification.starred_by.add(request.user)
+
+    return redirect("main:show_certifications")

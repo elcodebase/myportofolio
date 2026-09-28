@@ -47,7 +47,7 @@ class Certification(models.Model):
     issued_at = models.DateField()
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    starred_by = models.ManyToManyField(User, related_name = "starred_certifications", blank = True)
     def __str__(self):
         return f"{self.title} - {self.issuer}"
 
@@ -69,7 +69,7 @@ class Achievement(models.Model):
 
     @property
     def is_top_tier(self):
-        return self.level in [self.Level.National, self.Level.International]
+        return self.level in [self.Level.NATIONAL, self.Level.INTERNATIONAL]
 
     def __str__(self):
         return self.title
@@ -89,7 +89,6 @@ class Testimoni(models.Model):
         default = Category.TEMAN,
     )
 
-    @property
     def __str__(self):
         return self.name
 

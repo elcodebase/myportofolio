@@ -9,9 +9,11 @@
             <p class="section-kicker">Sertifikasi yang saya miliki</p>
             <div class="project-header">
                 <h1>Certifications</h1>
+                {% if user.is_superuser %}
                 <a href="{% url 'main:create_certification' %}" class="button project-add-button">
                     <span aria-hidden="true">+</span> Tambah Sertifikasi
                 </a>
+                {% endif %}
             </div>
 
             <div class="experience-grid project-grid">
@@ -30,8 +32,13 @@
                         {% endif %}
                         <div class="project-card-actions">
                             <div class="project-actions">
-                                <a href="{% url 'main:update_certification' certification.id %}" class="button button-secondary">Edit</a>
-                                {% include "components/certification_delete_modal.html" %}
+                                {% include "components/certifications_star.html" with certification=certification %}
+                                {% if user.is_superuser or is_editor %}
+                                    <a href="{% url 'main:update_certification' certification.id %}" class="button button-secondary">Edit</a>
+                                {% endif %}
+                                {% if user.is_superuser %}
+                                    {% include "components/certifications_delete_modal.html" %}
+                                {% endif %}
                             </div>
                         </div>
                     </article>

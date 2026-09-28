@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from main.models import Project
 from django.urls import reverse
 from django.utils import timezone
-from main.models import Experience
+from main.models import Experience, Project
 
 class ProjectViewTest(TestCase):
     def setUp(self):
@@ -11,18 +11,18 @@ class ProjectViewTest(TestCase):
     def test_projects_url_is_exist_and_uses_correct_template(self):
         response = self.client.get('/projects/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'projects.html')
+        self.assertTemplateUsed(response, 'project.html')
 
     def test_projects_display_when_data_exists(self):
         Project.objects.create(
             title="Sistem Portofolio",
             description="Aplikasi web portofolio dengan Django.",
-            category="Web Development"
+            tech_stack = "Django",
         )
         response = self.client.get('/projects/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Sistem Portofolio")
-        self.assertContains(response, "Web Development")
+        self.assertContains(response, "Django")
 
     def test_projects_empty_state_message(self):
         Project.objects.all().delete()
