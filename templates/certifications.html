@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block meta %}
-    <title>Certifications - {{ name }}</title>
+<title>Certifications - {{ name }}</title>
 {% endblock meta %}
 {% block content %}
 <main>
@@ -10,43 +10,140 @@
             <div class="project-header">
                 <h1>Certifications</h1>
                 {% if user.is_superuser %}
-                <a href="{% url 'main:create_certification' %}" class="button project-add-button">
+                <button type="button" class="button project-add-button" popovertarget="add-certification-modal">
                     <span aria-hidden="true">+</span> Tambah Sertifikasi
-                </a>
+                </button>
                 {% endif %}
             </div>
 
-            <div class="experience-grid project-grid">
-                {% for certification in certification_list %}
-                    <article class="experience-card">
-                        <span class="experience-category">{{ certification.issuer }}</span>
-                        <h2>{{ certification.title }}</h2>
-                        <p class="experience-description">
-                            Terbit: {{ certification.issued_at }}
-                            {% if certification.is_verified %}&middot; Terverifikasi{% endif %}
-                        </p>
-                        {% if certification.credential_url %}
-                            <p class="experience-status">
-                                <a href="{{ certification.credential_url }}">Lihat kredensial</a>
-                            </p>
-                        {% endif %}
-                        <div class="project-card-actions">
-                            <div class="project-actions">
-                                {% include "components/certifications_star.html" with certification=certification %}
-                                {% if user.is_superuser or is_editor %}
-                                    <a href="{% url 'main:update_certification' certification.id %}" class="button button-secondary">Edit</a>
-                                {% endif %}
-                                {% if user.is_superuser %}
-                                    {% include "components/certifications_delete_modal.html" %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </article>
-                {% empty %}
-                    <p class="empty-state">Belum ada sertifikasi yang ditambahkan.</p>
-                {% endfor %}
-            </div>
+            <form id="search-form" class="project-search">
+                <input type="search" id="search-input" name="title" value="{{ title_query }}"
+                    placeholder="Cari berdasarkan nama sertifikasi" class="project-search__input"
+                    aria-label="Cari berdasarkan nama sertifikasi">
+                <button type="submit" class="button">Cari</button>
+            </form>
+
+            <div id="loading" class="empty-state hide"><p>Memuat sertifikasi...</p></div>
+            <div id="error" class="empty-state hide"><p>Gagal memuat data sertifikasi.</p></div>
+            <div id="empty" class="empty-state hide"><p>Belum ada sertifikasi yang ditambahkan atau ditemukan.</p></div>
+            <div id="grid" class="experience-grid project-grid hide"></div>
         </div>
     </section>
 </main>
+
+{% if user.is_superuser %}
+{% include "components/certification_form_modal.html" %}
+{% endif %}
+
+<script>
+    const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
+    const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+    const DUMMY_ID = '00000000-0000-0000-0000-000000000000';
+    const STAR_URL = "{% url 'main:toggle_certification_star' '00000000-0000-0000-0000-000000000000' %}";
+    const EDIT_URL = "{% url 'main:update_certification' '00000000-0000-0000-0000-000000000000' %}";
+    const DELETE_URL = "{% url 'main:delete_certification' '00000000-0000-0000-0000-000000000000' %}";
+    const grid = document.getElementById('grid');
+    const searchInput = document.getElementById('search-input');
+    const certificationForm = document.getElementById('certification-form');
+    let searchTimer;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function showSection(id) {
+        ['loading', 'error', 'empty', 'grid'].forEach(name => {
+            document.getElementById(name).classList.toggle('hide', name !== id);
+        });
+    }
+
+    function buildCard(item) {
+        const c = item.fields;
+        const starHtml = IS_AUTHENTICATED
+            ? `<form method="post" action="${STAR_URL.replace(DUMMY_ID, item.pk)}" class="star-form">
+                {% csrf_token %}
+                <button type="submit" class="button button-star${c.is_starred ? ' is-starred' : ''}">★ ${c.is_starred ? 'Unstar' : 'Star'} ${c.star_count}</button>
+            </form>`
+            : `<a href="{% url 'main:login' %}" class="button button-star" title="Login untuk memberi star">★ ${c.star_count}</a>`;
+        return `
+            <article class="experience-card">
+                <span class="experience-category">${escapeHtml(c.issuer)}</span>
+                <h2>${escapeHtml(c.title)}</h2>
+                <p class="experience-description">Terbit: ${escapeHtml(c.issued_at)} ${c.is_verified ? '&middot; Terverifikasi' : ''}</p>
+                ${c.credential_url ? `<p class="experience-status"><a href="${escapeHtml(c.credential_url)}">Lihat kredensial</a></p>` : ''}
+                <div class="project-actions">
+                    ${starHtml}
+                    ${IS_SUPERUSER || IS_EDITOR ? `<a href="${EDIT_URL.replace(DUMMY_ID, item.pk)}" class="button button-secondary">Edit</a>` : ''}
+                    ${IS_SUPERUSER ? `<form method="post" action="${DELETE_URL.replace(DUMMY_ID, item.pk)}" onsubmit="return confirm('Hapus sertifikasi ini?');">
+                        {% csrf_token %}
+                        <button type="submit" class="button button-danger">Hapus</button>
+                    </form>` : ''}
+                </div>
+            </article>`;
+    }
+
+    async function fetchCertifications() {
+        showSection('loading');
+        try {
+            const response = await fetch(`{% url 'main:get_certifications_json' %}?title=${encodeURIComponent(searchInput.value.trim())}`);
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+            grid.innerHTML = data.map(buildCard).join('');
+            showSection(data.length ? 'grid' : 'empty');
+        } catch (error) {
+            showSection('error');
+        }
+    }
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(fetchCertifications, 300);
+    });
+
+    document.getElementById('search-form').addEventListener('submit', event => {
+        event.preventDefault();
+        clearTimeout(searchTimer);
+        fetchCertifications();
+    });
+
+    if (certificationForm) {
+        certificationForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submitButton = certificationForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch("{% url 'main:create_certification_ajax' %}", {
+                    method: 'POST',
+                    body: new FormData(certificationForm),
+                });
+                const result = await response.json().catch(() => ({}));
+
+                if (response.ok) {
+                    certificationForm.reset();
+                    document.getElementById('add-certification-modal').hidePopover();
+                    showToast('Berhasil', result.message, 'success');
+                    fetchCertifications();
+                } else {
+                    const message = result.errors
+                        ? Object.values(result.errors).flat().map(error => error.message).join(' ')
+                        : result.message || `Terjadi kesalahan (status ${response.status}).`;
+                    showToast('Gagal', message, 'error');
+                }
+            } catch (error) {
+                showToast('Gagal', 'Tidak dapat terhubung ke server. Silakan coba lagi.', 'error');
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    }
+
+    fetchCertifications();
+</script>
 {% endblock content %}

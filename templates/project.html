@@ -16,15 +16,11 @@
                 </button>
                 {% endif %}
             </div>
-
-            <button class="button button-secondary"
-                onclick="showToast('Notifikasi Sistem', 'Project berhasil dimuat dengan baik!', 'success')">
-                Test Toast Notifikasi
-            </button>
-
-            <form method="get" action="{% url 'main:show_projects' %}" class="project-search">
-                <input type="search" name="title" value="{{ title_query }}" placeholder="Cari berdasarkan nama proyek"
-                    class="project-search__input">
+            
+            <form id="project-search-form" class="project-search">
+                <input type="search" id="search-input" name="title" value="{{ title_query }}"
+                    placeholder="Cari berdasarkan nama proyek" class="project-search__input"
+                    aria-label="Cari berdasarkan nama proyek">
                 <button type="submit" class="button">Cari</button>
             </form>
 
@@ -45,51 +41,20 @@
 
             <!-- Project Grid -->
             <div id="grid" class="experience-grid project-grid hide"></div>
-            <div class="experience-grid project-grid">
-                {% for project in project_list %}
-                <article class="experience-card">
-                    {% if project.project_image_url %}
-                    <img src="{{ project.project_image_url }}" alt="Gambar {{ project.title }}" class="project-image">
-                    {% endif %}
-                    <h2>{{ project.title }}</h2>
-                    <span class="experience-category">{{ project.tech_stack }}</span>
-                    <p class="experience-description">{{ project.description }}</p>
-                    <div class="project-card-actions">
-                        <div class="project-actions">
-                            {% if project.project_url %}
-                            <a href="{{ project.project_url }}" class="button">Lihat proyek</a>
-                            {% endif %}
-                            {% include "components/project_star.html" with project=project %}
-                            {% if user.is_superuser or is_editor %}
-                            <a href="{% url 'main:update_project' project.id %}"
-                                class="button button-secondary">Edit</a>
-                            {% endif %}
-                            {% if user.is_superuser %}
-                            {% include "components/project_delete_modal.html" %}
-                            {% endif %}
-                        </div>
-                    </div>
-                </article>
-                {% empty %}
-                {% if title_query %}
-                <p class="empty-state">Tidak ada proyek dengan nama tersebut.</p>
-                {% else %}
-                <p class="empty-state">Belum ada proyek yang ditambahkan.</p>
-                {% endif %}
-                {% endfor %}
-            </div>
         </div>
     </section>
 </main>
 
 {% if user.is_superuser %}
-    {% include "components/project_form_modal.html" %}
+{% include "components/project_form_modal.html" %}
 {% endif %}
 
 <script>
     // Konfigurasi
     const BASE_PROJECTS_ENDPOINT = "{% url 'main:get_projects_json' %}";
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+    const CAN_EDIT = IS_SUPERUSER || "{{ is_editor|yesno:'true,false' }}" === "true";
     let projectsAbortController;
 
     // Elemen DOM
@@ -145,17 +110,38 @@
         const starTitle = project.star_count > 0
             ? `Dibintangi oleh ${escapeHtml(project.starred_by_names)}`
             : "Jadilah yang pertama memberi star";
+        const starHtml = IS_AUTHENTICATED
+            ? `<form method="post" action="${starUrl}" class="star-form">
+                {% csrf_token %}
+                <button type="submit" class="button button-star${isStarredClass}" title="${starTitle}">
+                    <span aria-hidden="true">★</span> ${starText} <span class="star-count">${project.star_count}</span>
+                </button>
+            </form>`
+            : `<a href="{% url 'main:login' %}" class="button button-star" title="Login untuk memberi star">
+                <span aria-hidden="true">★</span> <span class="star-count">${project.star_count}</span>
+            </a>`;
 
+        const editUrl = "{% url 'main:update_project' '00000000-0000-0000-0000-000000000000' %}"
+            .replace('00000000-0000-0000-0000-000000000000', projectId);
+        const editHtml = CAN_EDIT ? `<a href="${editUrl}" class="button button-secondary">Edit</a>` : '';
         // Komponen card
         const completeCardHtml = `
             ${imageHtml}
             <h2>${escapeHtml(project.title)}</h2>
             <span class="experience-category">${escapeHtml(project.tech_stack)}</span>
-            <p class="experience-description">${escapeHtml(project.description)}</p>;
-
-        articleElement.innerHTML = completeCardHtml;
-        return 
+            <p class="experience-description">${escapeHtml(project.description)}</p>
+            
+            <div class="project-card-actions">
+                <div class="project-actions">
+                    ${urlHtml}
+                    ${starHtml}
+                    ${editHtml}
+                    ${deleteHtml}
+                </div>
+            </div>
         `;
+        articleElement.innerHTML = completeCardHtml;
+        return articleElement;
     }
 
     // Fetch data project
@@ -217,7 +203,7 @@
     }
 
     // Start application
-        const CREATE_PROJECT_ENDPOINT = "{% url 'main:create_project_ajax' %}";
+    const CREATE_PROJECT_ENDPOINT = "{% url 'main:create_project_ajax' %}";
     const projectForm = document.getElementById('project-form');
 
     // Membaca nilai cookie, digunakan untuk mengambil token CSRF
@@ -275,7 +261,7 @@
     }
     fetchProjects(searchInput.value.trim());
 
-        // Mengubah karakter khusus HTML menjadi entity agar ditampilkan sebagai teks
+    // Mengubah karakter khusus HTML menjadi entity agar ditampilkan sebagai teks
     function escapeHtml(value) {
         return String(value ?? '')
             .replaceAll('&', '&amp;')

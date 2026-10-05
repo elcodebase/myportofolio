@@ -1,4 +1,4 @@
-from django.shortcuts import render
+
 from main.models import Experience, Certification
 from main.models import Project, Achievement, Testimoni, Organization
 from main.forms import ProjectForm, CertificationForm
@@ -7,13 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib import messages
-from django.core import serializers
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 import datetime
 from django.http import JsonResponse 
-from django.views.decorators.http import require_POST
+
 
 def is_editor(user):
     return user.is_authenticated and user.groups.filter(name='Editor').exists()
@@ -55,9 +53,10 @@ def show_projects(request):
     title_query = request.GET.get("title", "").strip()
 
     context = {
-        "name": "Burhan",
+        "name": "Jehezkiel",
         "title_query": title_query,
         "form": ProjectForm(),
+        "is_editor": is_editor(request.user),
     }
     return render(request, "project.html", context)
 
@@ -128,8 +127,7 @@ def get_projects_json(request):
 
 @login_required(login_url="/login/")
 def delete_project(request, project_id):
-    if not request.user.is_superuser:
-        raise PermissionDenied
+    require_owner(request.user)
     project = get_object_or_404(Project, pk=project_id)
 
     if request.method == "POST":
@@ -142,17 +140,12 @@ def delete_project(request, project_id):
 
 
 def show_certifications(request):
-    json_response = get_certifications_json(request)
-    certifications = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    ids = [certification.object.pk for certification in certifications]
-    certifications = Certification.objects.filter(pk__in=ids).prefetch_related("starred_by").order_by("-issued_at")
+    title_query = request.GET.get("title", "").strip()
 
     context = {
         "name": "Jehezkiel",
-        "certification_list": certifications,
+        "title_query": title_query,
+        "form": CertificationForm(),
         "is_editor": is_editor(request.user),
     }
     return render(request, "certifications.html", context)
@@ -195,12 +188,31 @@ def update_certification(request, certification_id):
 
 
 def get_certifications_json(request):
-    certifications = Certification.objects.all()
-    certifications_json = serializers.serialize(
-        "json", certifications,
-        fields=("title", "issuer", "credential_url", "issued_at", "is_verified", "created_at"),
-    )
-    return HttpResponse(certifications_json, content_type="application/json")
+    title_query = request.GET.get("title", "").strip()
+    certifications = Certification.objects.prefetch_related("starred_by").order_by("-issued_at")
+
+    if title_query:
+        certifications = certifications.filter(title__icontains=title_query)
+
+    data = []
+    for certification in certifications:
+        starred_users = certification.starred_by.all()
+        is_starred = request.user in starred_users if request.user.is_authenticated else False
+
+        data.append({
+            "pk": str(certification.id),
+            "fields": {
+                "title": certification.title,
+                "issuer": certification.issuer,
+                "credential_url": certification.credential_url,
+                "issued_at": certification.issued_at.isoformat(),
+                "is_verified": certification.is_verified,
+                "star_count": starred_users.count(),
+                "is_starred": is_starred,
+            }
+        })
+
+    return JsonResponse(data, safe=False)
 
 @login_required(login_url="/login/")
 def delete_certification(request, certification_id):
@@ -217,21 +229,21 @@ def delete_certification(request, certification_id):
 def show_achievements(request):
     achievement_list = Achievement.objects.all()
     context = {
-        'achievement': achievement_list
+        'achievement_list': achievement_list
     }
     return render(request, 'achievements.html', context)
 
 def show_testimonies(request):
     testimonies_list = Testimoni.objects.all()
     context = {
-        'testimonies': testimonies_list
+        'testimonies_list': testimonies_list
     }
     return render(request, 'testimonies.html', context)
 
 def show_organization(request):
     organization_list = Organization.objects.all()
     context = {
-        'organization': organization_list
+        'organization_list': organization_list
     }
     return render(request, 'organization.html', context)
 
@@ -308,6 +320,25 @@ def create_project_ajax(request):
         project = form.save()
         return JsonResponse(
             {"message": "Proyek berhasil ditambahkan.", "pk": str(project.id)},
+            status=201,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
+
+@require_POST
+def create_certification_ajax(request):
+    if not request.user.is_superuser:
+        return JsonResponse(
+            {"message": "Hanya pemilik portofolio yang dapat menambahkan sertifikasi."},
+            status=403,
+        )
+
+    form = CertificationForm(request.POST)
+    if form.is_valid():
+        certification = form.save()
+        return JsonResponse(
+            {"message": "Sertifikasi berhasil ditambahkan.", "pk": str(certification.id)},
             status=201,
         )
 

@@ -1,5 +1,5 @@
 from django.test import TestCase, Client
-from main.models import Project
+
 from django.urls import reverse
 from django.utils import timezone
 from main.models import Experience, Project
@@ -19,7 +19,7 @@ class ProjectViewTest(TestCase):
             description="Aplikasi web portofolio dengan Django.",
             tech_stack = "Django",
         )
-        response = self.client.get('/projects/')
+        response = self.client.get('/api/projects/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Sistem Portofolio")
         self.assertContains(response, "Django")
@@ -28,7 +28,8 @@ class ProjectViewTest(TestCase):
         Project.objects.all().delete()
         response = self.client.get('/projects/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Belum ada proyek yang ditambahkan.")
+        self.assertContains(response, "Belum ada proyek yang ditambahkan atau ditemukan.")
+        self.assertEqual(self.client.get('/api/projects/').json(), [])
 
 class MainTest(TestCase):
     def setUp(self):

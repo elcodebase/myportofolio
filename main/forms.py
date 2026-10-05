@@ -93,3 +93,11 @@ class CertificationForm(ModelForm):
             "issued_at": DateInput(attrs={"type": "date"}),
             "is_verified": CheckboxInput(),
         }
+    
+    def clean_title(self):
+        title = strip_tags(self.cleaned_data["title"]).strip()
+        if not title: raise ValidationError("Nama sertifikasi tidak boleh hanya berisi tag HTML.")
+        return title
+
+    def clean_issuer(self):
+        return strip_tags(self.cleaned_data["issuer"]).strip()

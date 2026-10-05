@@ -2,7 +2,7 @@ from django.urls import path
 from main.views import (
     show_main, show_experience, toggle_star,
     show_projects, create_project, get_projects_json, delete_project, update_project,
-    show_certifications, create_certification, update_certification, toggle_certification_star, create_project_ajax,
+    show_certifications, create_certification, update_certification, toggle_certification_star, create_project_ajax, create_certification_ajax,
     delete_certification, get_certifications_json, show_achievements, show_testimonies, show_organization, register, login_user, logout_user
 )
 
@@ -33,5 +33,6 @@ urlpatterns = [
     path("projects/<uuid:project_id>/star/", toggle_star, name="toggle_star"),
     path("certifications/<uuid:certification_id>/star/", toggle_certification_star, name="toggle_certification_star"),
     path("projects/add-ajax/", create_project_ajax, name="create_project_ajax"),
+    path("certifications/add-ajax/", create_certification_ajax, name="create_certification_ajax"),
  
 ]
