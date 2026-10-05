@@ -43,3 +43,16 @@ Pada bagian section Skills, AI digunakan untuk membantu memberikan struktur dan 
 2. Fetch bersifat asinkron dan mengembalikan Promise, bukan langsung datanya. Await membuat kode menunggu sampai Promise selesai, sehingga kita mendapatkan respons dari server dan bisa memprosesnya, misalnya mengubahnya menjadi JSON. Kalau tidak memakai await, yang didapat masih berupa Promise yang belum selesai, sehingga status respons tidak bisa dicek dan proses pengolahan data akan error karena datanya belum tersedia.
 
 3. XSS adalah serangan ketika penyerang menyisipkan script berbahaya ke dalam data yang nantinya dijalankan di browser pengguna lain, misalnya tag gambar yang menjalankan alert saat halaman dibuka. Template Django lebih aman karena otomatis melakukan escaping pada setiap variabel yang ditampilkan. Sementara itu, data dari AJAX yang dimasukkan langsung ke HTML lewat JavaScript tidak di-escape otomatis, jadi browser bisa membacanya sebagai HTML asli. Karena itu, saya melakukan escaping pada setiap teks di JavaScript dan membersihkan tag HTML di sisi server pada form sertifikasi.
+
+### AI Disclosure Tugas 5
+
+Saya menggunakan Claude untuk memeriksa apakah kode saya sudah memenuhi checklist Tugas 5.
+
+Keterbatasan AI
+1. AI tidak bisa melihat tampilan di browser, jadi modal, toast, dan pengujian XSS saya cek sendiri di browser untuk setiap peran. 
+2. AI hanya membaca kode yang saya kirim, bukan repo saya langsung, sehingga hasilnya tetap saya cocokkan dengan kode terbaru.
+
+Contoh perbaikan manual yang saya lakukan: 
+Mengganti response = self.client.get('/api/projects/') dari esponse = self.client.get('/projects/') pada main/test.py
+
+AI membantu mempercepat pengecekan, tetapi hasilnya tetap perlu saya verifikasi.
