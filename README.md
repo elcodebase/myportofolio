@@ -28,3 +28,47 @@ Pada bagian section Skills, AI digunakan untuk membantu memberikan struktur dan 
 2. Menyimpan data portofolio pada model alih-alih menuliskannya secara langsung pada template menerapkan prinsip pemisahan peran, yaitu memisahkan pengelolaan data dari antarmuka pengguna. Dampaknya terhadap pemeliharaan aplikasi sangat besar, contohnya ketika ada perubahan atau penambahan data portofolio, pengembang dapat langsung memperbaruinya melalui basis data atau panel admin Django tanpa perlu mengubah berkas kode HTML secara manual. 
 
 3. Perintah makemigrations dan migrate pada Django merupakan dua tahapan berurutan dalam mengelola perubahan struktur basis data. Perintah makemigrations bertugas untuk memeriksa berkas models.py, mendeteksi perubahan skema data yang dilakukan, dan membukukan perubahan tersebut menjadi berkas skrip migrasi baru di folder migrations/ tanpa mengubah basis data secara langsung. Sementara itu, perintah migrate bertugas untuk mengeksekusi berkas skrip migrasi tersebut dan menerapkan perubahan skema secara nyata ke dalam tabel-tabel basis data. Sebagai contoh, jika kita menambahkan bidang baru pada kelas model portofolio di models.py, kita harus menjalankan python manage.py makemigrations terlebih dahulu untuk mendokumentasikan penambahan kolom tersebut ke dalam berkas migrasi, kemudian menjalankan python manage.py migrate agar kolom description benar-benar dibuat pada tabel basis data.
+
+### Tugas 3
+1. Django menyediakan ModelForm supaya struktur form otomatis mengikuti struktur model (field, tipe input, validasi tipe data, hingga batas panjang karakter) tanpa saya harus menuliskan ulang setiap elemen input secara manual dan menjaga konsistensinya setiap kali model berubah. Selain lebih ringkas, ModelForm juga otomatis menjalankan validasi bawaan Django sebelum data disimpan ke database. {% csrf_token %} wajib ditambahkan karena Django mewajibkan setiap request POST menyertakan token rahasia unik yang dibuat server. Tanpa token ini, permintaan akan ditolak sebagai perlindungan dari serangan Cross-Site Request Forgery.
+
+2. JSON lebih disukai dibanding XML pada pengembangan web modern karena strukturnya lebih ringkas sehingga ukuran data yang dikirim lebih kecil dan lebih cepat diproses. JSON juga native terhadap JavaScript karena bentuknya identik dengan object literal JavaScript sehingga di sisi frontend data JSON bisa langsung dipakai tanpa parsing tambahan yang rumit. 
+
+3. Alurnya dimulai saat client mengakses endpoint. View mengambil data dari database melalui Django ORM (Project.objects.all() / Certification.objects.all()), lalu memanggil serializers.serialize("json", queryset) untuk mengubah objek model Python menjadi teks berformat JSON, dan mengembalikannya sebagai HttpResponse dengan content_type="application/json". Proses serialization diperlukan karena objek model Django adalah instance Python  sehingga perlu dikonversi dulu ke format JSON yang bisa dibaca oleh sistem lain di luar Python/Django.
+
+### Tugas 5
+
+1. Debouncing adalah teknik untuk menunda eksekusi fungsi sampai pengguna berhenti melakukan aksi selama waktu tertentu. Pada pencarian AJAX, tanpa debouncing setiap ketikan langsung mengirim request ke server, padahal yang dibutuhkan hanya hasil dari kata terakhir. Di halaman Certifications, saya memasang timer 300 ms yang di-reset setiap kali pengguna mengetik, sehingga request baru dikirim setelah pengguna berhenti mengetik. Dengan begitu, beban server berkurang dan hasil pencarian tidak tertimpa respons request lama.
+
+2. Fetch bersifat asinkron dan mengembalikan Promise, bukan langsung datanya. Await membuat kode menunggu sampai Promise selesai, sehingga kita mendapatkan respons dari server dan bisa memprosesnya, misalnya mengubahnya menjadi JSON. Kalau tidak memakai await, yang didapat masih berupa Promise yang belum selesai, sehingga status respons tidak bisa dicek dan proses pengolahan data akan error karena datanya belum tersedia.
+
+3. XSS adalah serangan ketika penyerang menyisipkan script berbahaya ke dalam data yang nantinya dijalankan di browser pengguna lain, misalnya tag gambar yang menjalankan alert saat halaman dibuka. Template Django lebih aman karena otomatis melakukan escaping pada setiap variabel yang ditampilkan. Sementara itu, data dari AJAX yang dimasukkan langsung ke HTML lewat JavaScript tidak di-escape otomatis, jadi browser bisa membacanya sebagai HTML asli. Karena itu, saya melakukan escaping pada setiap teks di JavaScript dan membersihkan tag HTML di sisi server pada form sertifikasi.
+
+### AI Disclosure Tugas 5
+
+Saya menggunakan Claude untuk memeriksa apakah kode saya sudah memenuhi checklist Tugas 5.
+
+Keterbatasan AI
+1. AI tidak bisa melihat tampilan di browser, jadi modal, toast, dan pengujian XSS saya cek sendiri di browser untuk setiap peran. 
+2. AI hanya membaca kode yang saya kirim, bukan repo saya langsung, sehingga hasilnya tetap saya cocokkan dengan kode terbaru.
+
+Contoh perbaikan manual yang saya lakukan: 
+Mengganti response = self.client.get('/api/projects/') dari esponse = self.client.get('/projects/') pada main/test.py
+
+AI membantu mempercepat pengecekan, tetapi hasilnya tetap perlu saya verifikasi.
+
+
+### Tugas 6
+
+1. REST adalah gaya atau aturan dalam membuat API. API yang hanya mengembalikan JSON belum tentu RESTful, karena yang penting adalah cara API itu disusun. Setiap data punya alamat sendiri, aksinya dibedakan lewat HTTP method (GET untuk membaca, POST untuk menambah, PUT atau PATCH untuk mengubah, DELETE untuk menghapus), dan status yang dikembalikan sesuai dengan hasilnya.
+PUT dipakai untuk mengganti seluruh data, jadi semua field wajib harus dikirim. PATCH dipakai untuk mengubah sebagian data saja, jadi cukup kirim field yang mau diubah. Contohnya, PUT dipakai saat mengirim ulang seluruh isi form edit, sedangkan PATCH dipakai saat hanya ingin mengganti judul sertifikasi.
+
+2. Serializer berfungsi untuk mengubah data dari database menjadi JSON, dan juga mengecek input dari pengguna sebelum disimpan. Keuntungannya dibanding membuat dictionary sendiri dengan JsonResponse adalah kodenya lebih rapi dan tidak perlu ditulis berulang. Validasinya juga ada di satu tempat dan otomatis mengembalikan error kalau input salah. Selain itu, field seperti jumlah star bisa dibuat hanya bisa dibaca, dan data sensitif tidak ikut tampil.
+
+3. Autentikasi adalah proses mengecek siapa pengguna yang sedang mengirim request. Otorisasi adalah proses mengecek apa saja yang boleh dilakukan pengguna tersebut. Hak akses harus dicek di server dengan permission class, karena menyembunyikan tombol di template hanya mengubah tampilan. Orang masih bisa mengirim request langsung lewat console browser, jadi server tetap harus menolak request yang tidak diizinkan.
+
+4. Session login disimpan di cookie, dan browser otomatis mengirim cookie itu setiap ada request ke website kita, termasuk request yang dipicu dari website lain. Token CSRF dibutuhkan agar hanya request dari halaman website kita sendiri yang diterima. Test dengan force_authenticate tidak cukup, karena cara itu langsung menganggap pengguna sudah login tanpa proses login yang asli, sehingga pengecekan CSRF ikut terlewati. Untuk membuktikan CSRF berjalan, test harus memakai login yang sungguhan dengan pengecekan CSRF aktif, lalu memastikan request tanpa token ditolak.
+
+### AI Disclosure Tugas 6
+
+Saya menggunakan Claude (Anthropic) untuk membantu mengerjakan tugas ini. Bagian yang dibantu antara lain menemukan versi Django di requirements.txt yang bentrok dengan DRF, contoh kode serializer, API view, dan URL. Setelah itu saya menjalankan test dan mencoba fiturnya dengan setiap peran.

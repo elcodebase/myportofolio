@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block meta %}
+<title>Certifications - {{ name }}</title>
+{% endblock meta %}
+{% block content %}
+<main>
+    <section class="experience-section" id="certifications">
+        <div class="container">
+            <p class="section-kicker">Sertifikasi yang saya miliki</p>
+            <div class="project-header">
+                <h1>Certifications</h1>
+                {% if user.is_superuser %}
+                <button type="button" class="button project-add-button" popovertarget="add-certification-modal">
+                    <span aria-hidden="true">+</span> Tambah Sertifikasi
+                </button>
+                {% endif %}
+            </div>
+
+            <form id="search-form" class="project-search">
+                <input type="search" id="search-input" name="title" value="{{ title_query }}"
+                    placeholder="Cari berdasarkan nama sertifikasi" class="project-search__input"
+                    aria-label="Cari berdasarkan nama sertifikasi">
+                <button type="submit" class="button">Cari</button>
+            </form>
+
+            <div id="loading" class="empty-state hide"><p>Memuat sertifikasi...</p></div>
+            <div id="error" class="empty-state hide"><p>Gagal memuat data sertifikasi.</p></div>
+            <div id="empty" class="empty-state hide"><p>Belum ada sertifikasi yang ditambahkan atau ditemukan.</p></div>
+            <div id="grid" class="experience-grid project-grid hide"></div>
+        </div>
+    </section>
+</main>
+
+{% if user.is_superuser %}
+{% include "components/certification_form_modal.html" %}
+{% endif %}
+
+{% csrf_token %}
+<script>
+    const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_EDITOR = "{{ is_editor|yesno:'true,false' }}" === "true";
+    const IS_AUTHENTICATED = "{{ user.is_authenticated|yesno:'true,false' }}" === "true";
+    const DUMMY_ID = '00000000-0000-0000-0000-000000000000';
+    const LIST_URL = "{% url 'api:certification-list' %}";
+    const DETAIL_URL = "{% url 'api:certification-detail' '00000000-0000-0000-0000-000000000000' %}";
+    const STAR_URL = "{% url 'api:certification-star' '00000000-0000-0000-0000-000000000000' %}";
+    const EDIT_URL = "{% url 'main:update_certification' '00000000-0000-0000-0000-000000000000' %}";
+    const grid = document.getElementById('grid');
+    const searchInput = document.getElementById('search-input');
+    const certificationForm = document.getElementById('certification-form');
+    let searchTimer;
+
+    function getCookie(name) {
+        const prefix = `${name}=`;
+        const cookie = document.cookie.split(';').map(value => value.trim())
+            .find(value => value.startsWith(prefix));
+        return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#39;');
+    }
+
+    function showSection(id) {
+        ['loading', 'error', 'empty', 'grid'].forEach(name => {
+            document.getElementById(name).classList.toggle('hide', name !== id);
+        });
+    }
+
+    function buildCard(c) {
+        const starHtml = IS_AUTHENTICATED
+            ? `<button type="button" class="button button-star${c.is_starred ? ' is-starred' : ''}" data-action="star" data-id="${escapeHtml(c.id)}">★ ${c.is_starred ? 'Unstar' : 'Star'} ${c.star_count}</button>`
+            : `<a href="{% url 'main:login' %}" class="button button-star" title="Login untuk memberi star">★ ${c.star_count}</a>`;
+        return `
+            <article class="experience-card">
+                <span class="experience-category">${escapeHtml(c.issuer)}</span>
+                <h2>${escapeHtml(c.title)}</h2>
+                <p class="experience-description">Terbit: ${escapeHtml(c.issued_at)} ${c.is_verified ? '&middot; Terverifikasi' : ''}</p>
+                ${c.credential_url ? `<p class="experience-status"><a href="${escapeHtml(c.credential_url)}">Lihat kredensial</a></p>` : ''}
+                <div class="project-actions">
+                    ${starHtml}
+                    ${IS_SUPERUSER || IS_EDITOR ? `<a href="${escapeHtml(EDIT_URL.replace(DUMMY_ID, c.id))}" class="button button-secondary">Edit</a>` : ''}
+                    ${IS_SUPERUSER ? `<button type="button" class="button button-danger" data-action="delete" data-id="${escapeHtml(c.id)}">Hapus</button>` : ''}
+                </div>
+            </article>`;
+    }
+
+    function apiErrorMessage(data, status) {
+        const messages = Object.values(data).flat().filter(value => typeof value === 'string');
+        return messages.join(' ') || `Terjadi kesalahan (status ${status}).`;
+    }
+
+    async function writeCertification(url, method, payload) {
+        const response = await fetch(url, {
+            method,
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: payload === undefined ? undefined : JSON.stringify(payload),
+        });
+        if (response.status === 204) return null;
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(apiErrorMessage(data, response.status));
+        return data;
+    }
+
+    async function fetchCertifications() {
+        showSection('loading');
+        try {
+            const response = await fetch(`${LIST_URL}?title=${encodeURIComponent(searchInput.value.trim())}`, {
+                headers: { Accept: 'application/json' },
+            });
+            if (!response.ok) throw new Error();
+            const data = await response.json();
+            grid.innerHTML = data.map(buildCard).join('');
+            showSection(data.length ? 'grid' : 'empty');
+        } catch (error) {
+            showSection('error');
+        }
+    }
+
+    searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(fetchCertifications, 300);
+    });
+
+    document.getElementById('search-form').addEventListener('submit', event => {
+        event.preventDefault();
+        clearTimeout(searchTimer);
+        fetchCertifications();
+    });
+
+    if (certificationForm) {
+        certificationForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            const submitButton = certificationForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+
+            try {
+                const fields = new FormData(certificationForm);
+                await writeCertification(LIST_URL, 'POST', {
+                    title: fields.get('title'),
+                    issuer: fields.get('issuer'),
+                    credential_url: fields.get('credential_url'),
+                    issued_at: fields.get('issued_at'),
+                    is_verified: fields.get('is_verified') === 'on',
+                });
+                certificationForm.reset();
+                document.getElementById('add-certification-modal').hidePopover();
+                showToast('Berhasil', 'Sertifikasi berhasil ditambahkan.', 'success');
+                fetchCertifications();
+            } catch (error) {
+                showToast('Gagal', error.message, 'error');
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    }
+
+    grid.addEventListener('click', async event => {
+        const button = event.target.closest('button[data-action]');
+        if (!button || button.disabled) return;
+        const action = button.dataset.action;
+        if (action === 'delete' && !confirm('Hapus sertifikasi ini?')) return;
+        button.disabled = true;
+
+        try {
+            const url = (action === 'star' ? STAR_URL : DETAIL_URL).replace(DUMMY_ID, button.dataset.id);
+            await writeCertification(url, action === 'star' ? 'POST' : 'DELETE');
+            showToast('Berhasil', action === 'star' ? 'Star diperbarui.' : 'Sertifikasi dihapus.', 'success');
+            fetchCertifications();
+        } catch (error) {
+            showToast('Gagal', error.message, 'error');
+        } finally {
+            button.disabled = false;
+        }
+    });
+
+    fetchCertifications();
+</script>
+{% endblock content %}

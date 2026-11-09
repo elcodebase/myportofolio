@@ -1,0 +1,16 @@
+{% if user.is_authenticated %}
+<form method="post" action="{% url 'main:toggle_certification_star' certification.id %}" class="star-form">
+    {% csrf_token %}
+    <button type="submit"
+            class="button button-star{% if user in certification.starred_by.all %} is-starred{% endif %}"
+            title="{% if user in certification.starred_by.all %}Anda sudah memberi star{% else %}Beri star{% endif %}">
+        <span aria-hidden="true">★</span>
+        {% if user in certification.starred_by.all %}Unstar{% else %}Star{% endif %}
+        <span class="star-count">{{ certification.starred_by.count }}</span>
+    </button>
+</form>
+{% else %}
+<a href="{% url 'main:login' %}?next={{ request.path }}" class="button button-star" title="Login untuk memberi star">
+    <span aria-hidden="true">★</span> <span class="star-count">{{ certification.starred_by.count }}</span>
+</a>
+{% endif %}
