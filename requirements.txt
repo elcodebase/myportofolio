@@ -1,4 +1,4 @@
-Django==5.0.12
+django~=5.2
 djangorestframework~=3.18.3
 gunicorn
 whitenoise

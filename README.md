@@ -56,3 +56,19 @@ Contoh perbaikan manual yang saya lakukan:
 Mengganti response = self.client.get('/api/projects/') dari esponse = self.client.get('/projects/') pada main/test.py
 
 AI membantu mempercepat pengecekan, tetapi hasilnya tetap perlu saya verifikasi.
+
+
+### Tugas 6
+
+1. REST adalah gaya atau aturan dalam membuat API. API yang hanya mengembalikan JSON belum tentu RESTful, karena yang penting adalah cara API itu disusun. Setiap data punya alamat sendiri, aksinya dibedakan lewat HTTP method (GET untuk membaca, POST untuk menambah, PUT atau PATCH untuk mengubah, DELETE untuk menghapus), dan status yang dikembalikan sesuai dengan hasilnya.
+PUT dipakai untuk mengganti seluruh data, jadi semua field wajib harus dikirim. PATCH dipakai untuk mengubah sebagian data saja, jadi cukup kirim field yang mau diubah. Contohnya, PUT dipakai saat mengirim ulang seluruh isi form edit, sedangkan PATCH dipakai saat hanya ingin mengganti judul sertifikasi.
+
+2. Serializer berfungsi untuk mengubah data dari database menjadi JSON, dan juga mengecek input dari pengguna sebelum disimpan. Keuntungannya dibanding membuat dictionary sendiri dengan JsonResponse adalah kodenya lebih rapi dan tidak perlu ditulis berulang. Validasinya juga ada di satu tempat dan otomatis mengembalikan error kalau input salah. Selain itu, field seperti jumlah star bisa dibuat hanya bisa dibaca, dan data sensitif tidak ikut tampil.
+
+3. Autentikasi adalah proses mengecek siapa pengguna yang sedang mengirim request. Otorisasi adalah proses mengecek apa saja yang boleh dilakukan pengguna tersebut. Hak akses harus dicek di server dengan permission class, karena menyembunyikan tombol di template hanya mengubah tampilan. Orang masih bisa mengirim request langsung lewat console browser, jadi server tetap harus menolak request yang tidak diizinkan.
+
+4. Session login disimpan di cookie, dan browser otomatis mengirim cookie itu setiap ada request ke website kita, termasuk request yang dipicu dari website lain. Token CSRF dibutuhkan agar hanya request dari halaman website kita sendiri yang diterima. Test dengan force_authenticate tidak cukup, karena cara itu langsung menganggap pengguna sudah login tanpa proses login yang asli, sehingga pengecekan CSRF ikut terlewati. Untuk membuktikan CSRF berjalan, test harus memakai login yang sungguhan dengan pengecekan CSRF aktif, lalu memastikan request tanpa token ditolak.
+
+### AI Disclosure Tugas 6
+
+Saya menggunakan Claude (Anthropic) untuk membantu mengerjakan tugas ini. Bagian yang dibantu antara lain menemukan versi Django di requirements.txt yang bentrok dengan DRF, contoh kode serializer, API view, dan URL. Setelah itu saya menjalankan test dan mencoba fiturnya dengan setiap peran.

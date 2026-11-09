@@ -163,11 +163,15 @@ class CertificationAPITest(APITestCase):
         self.assertEqual(len(self.client.get(self.list_url, {"title": "django"}).data), 1)
         self.assertEqual(self.client.get(self.list_url, {"title": "zzz"}).data, [])
 
-    def test_visitor_cannot_write(self):
-        self.client.force_authenticate(user=self.visitor)
-        self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, 403)
-        self.assertEqual(self.client.patch(self.detail_url, {"title": "X"}, format="json").status_code, 403)
-        self.assertEqual(self.client.delete(self.detail_url).status_code, 403)
+    def test_guest_and_visitor_cannot_write(self):
+        for user in (None, self.visitor):
+            self.client.force_authenticate(user=user)
+            self.assertEqual(self.client.post(self.list_url, self.payload, format="json").status_code, 403)
+            self.assertEqual(self.client.patch(self.detail_url, {"title": "X"}, format="json").status_code, 403)
+            self.assertEqual(self.client.delete(self.detail_url).status_code, 403)
+        self.assertEqual(Certification.objects.count(), 1)
+        self.cert.refresh_from_db()
+        self.assertEqual(self.cert.title, "Django Fundamentals")
 
     def test_editor_can_patch_but_not_create_or_delete(self):
         self.client.force_authenticate(user=self.editor)
@@ -182,13 +186,24 @@ class CertificationAPITest(APITestCase):
         self.client.force_authenticate(user=self.owner)
         response = self.client.post(self.list_url, self.payload, format="json")
         self.assertEqual(response.status_code, 201)
+        self.assertTrue(Certification.objects.filter(pk=response.data["id"]).exists())
         self.assertEqual(self.client.delete(self.detail_url).status_code, 204)
+        self.assertFalse(Certification.objects.filter(pk=self.cert.pk).exists())
 
     def test_validation_and_star(self):
+        self.assertEqual(self.client.post(self.star_url).status_code, 403)
         self.client.force_authenticate(user=self.owner)
         response = self.client.post(self.list_url, {**self.payload, "title": "<b></b>"}, format="json")
         self.assertEqual(response.status_code, 400)
         self.assertIn("title", response.data)
+        self.assertEqual(Certification.objects.count(), 1)
         self.client.force_authenticate(user=self.visitor)
         self.assertTrue(self.client.post(self.star_url).data["is_starred"])
         self.assertFalse(self.client.post(self.star_url).data["is_starred"])
+
+    def test_session_write_without_csrf_is_rejected(self):
+        client = APIClient(enforce_csrf_checks=True)
+        self.assertTrue(client.login(username="owner", password="pw"))
+        response = client.post(self.list_url, self.payload, format="json")
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(Certification.objects.count(), 1)

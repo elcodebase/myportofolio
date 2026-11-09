@@ -7,7 +7,7 @@
     <section class="experience-section">
         <div class="container">
             <h1>{% if is_edit %}Edit Sertifikasi{% else %}Tambah Sertifikasi{% endif %}</h1>
-            <form method="post"
+            <form id = "certification-page-form" method="post"
                   action="{% if is_edit %}{% url 'main:update_certification' certification.id %}{% else %}{% url 'main:create_certification' %}{% endif %}"
                   class="project-form">
                 {% csrf_token %}
@@ -26,4 +26,53 @@
         </div>
     </section>
 </main>
+
+
+{% if is_edit %}
+<script>
+    const pageForm = document.getElementById('certification-page-form');
+
+    function getCookie(name) {
+        const prefix = `${name}=`;
+        const cookie = document.cookie.split(';').map(value => value.trim())
+            .find(value => value.startsWith(prefix));
+        return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+    }
+
+    pageForm.addEventListener('submit', async event => {
+        event.preventDefault();
+        const submitButton = pageForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+
+        try {
+            const fields = new FormData(pageForm);
+            const response = await fetch("{% url 'api:certification-detail' certification.id %}", {
+                method: 'PATCH',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({
+                    title: fields.get('title'),
+                    issuer: fields.get('issuer'),
+                    credential_url: fields.get('credential_url'),
+                    issued_at: fields.get('issued_at'),
+                    is_verified: fields.get('is_verified') === 'on',
+                }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const messages = Object.values(data).flat().filter(value => typeof value === 'string');
+                throw new Error(messages.join(' ') || `Terjadi kesalahan (status ${response.status}).`);
+            }
+            window.location.href = "{% url 'main:show_certifications' %}";
+        } catch (error) {
+            showToast('Gagal', error.message, 'error');
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+</script>
+{% endif %}
 {% endblock content %}
